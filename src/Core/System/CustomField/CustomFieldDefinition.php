@@ -49,6 +49,7 @@ class CustomFieldDefinition extends EntityDefinition
             'allowCustomerWrites' => false,
             'allowCartExpose' => false,
             'storeApiAware' => true,
+            'searchable' => false,
         ];
     }
 
@@ -64,6 +65,7 @@ class CustomFieldDefinition extends EntityDefinition
             new BoolField('allow_customer_write', 'allowCustomerWrite'),
             new BoolField('allow_cart_expose', 'allowCartExpose'),
             new BoolField('store_api_aware', 'storeApiAware'),
+            new BoolField('searchable', 'searchable'),
             new ManyToOneAssociationField('customFieldSet', 'set_id', CustomFieldSetDefinition::class, 'id', false),
             (new OneToManyAssociationField('productSearchConfigFields', ProductSearchConfigFieldDefinition::class, 'custom_field_id', 'id'))->addFlags(new CascadeDelete()),
         ]);

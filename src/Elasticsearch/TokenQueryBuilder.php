@@ -26,6 +26,7 @@ use Shopware\Core\Framework\DataAbstractionLayer\Field\TranslatedField;
 use Shopware\Core\Framework\Feature;
 use Shopware\Core\Framework\Log\Package;
 use Shopware\Core\System\CustomField\CustomFieldService;
+use Shopware\Elasticsearch\Framework\ElasticsearchIndexingUtils;
 use Shopware\Elasticsearch\Product\ElasticsearchOptimizeSwitch;
 use Shopware\Elasticsearch\Product\SearchFieldConfig;
 
@@ -44,7 +45,8 @@ class TokenQueryBuilder
         private readonly DefinitionInstanceRegistry $definitionRegistry,
         private readonly CustomFieldService $customFieldService,
         private readonly AbstractKeyValueStorage $storage,
-        private readonly int $minGram = 4
+        private readonly int $minGram = 4,
+        private readonly ElasticsearchIndexingUtils $indexingUtils
     ) {
     }
 
@@ -67,7 +69,15 @@ class TokenQueryBuilder
             $real = $field instanceof TranslatedField ? EntityDefinitionQueryHelper::getTranslatedField($fieldDefinition, $field) : $field;
 
             if (str_contains($config->getField(), 'customFields')) {
-                $real = $this->customFieldService->getCustomField(str_replace('customFields.', '', $config->getField()));
+                $customFieldName = str_replace('customFields.', '', $config->getField());
+
+                // Only include searchable custom fields in search queries
+                $customFieldTypes = $this->indexingUtils->getCustomFieldTypes($entity, $context);
+                if (!isset($customFieldTypes[$customFieldName])) {
+                    continue;
+                }
+
+                $real = $this->customFieldService->getCustomField($customFieldName);
             }
 
             if (!$real) {
