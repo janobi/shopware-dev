@@ -45,8 +45,8 @@ class TokenQueryBuilder
         private readonly DefinitionInstanceRegistry $definitionRegistry,
         private readonly CustomFieldService $customFieldService,
         private readonly AbstractKeyValueStorage $storage,
-        private readonly int $minGram = 4,
-        private readonly ElasticsearchIndexingUtils $indexingUtils
+        private readonly ElasticsearchIndexingUtils $indexingUtils,
+        private readonly int $minGram = 4
     ) {
     }
 
