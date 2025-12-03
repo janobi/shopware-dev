@@ -2,6 +2,7 @@
 
 namespace Shopware\Core\Checkout\Order\Aggregate\OrderLineItem;
 
+use Shopware\Core\Checkout\Cart\LineItem\LineItem;
 use Shopware\Core\Checkout\Order\Aggregate\OrderDeliveryPosition\OrderDeliveryPositionDefinition;
 use Shopware\Core\Checkout\Order\Aggregate\OrderLineItemDownload\OrderLineItemDownloadDefinition;
 use Shopware\Core\Checkout\Order\Aggregate\OrderTransactionCaptureRefundPosition\OrderTransactionCaptureRefundPositionDefinition;
@@ -111,7 +112,16 @@ class OrderLineItemDefinition extends EntityDefinition
             (new FloatField('unit_price', 'unitPrice'))->addFlags(new ApiAware(), new Computed()),
             (new FloatField('total_price', 'totalPrice'))->addFlags(new ApiAware(), new Computed()),
             (new LongTextField('description', 'description'))->addFlags(new ApiAware()),
-            (new StringField('type', 'type'))->addFlags(new ApiAware()),
+            (new StringField('type', 'type'))->addFlags(new ApiAware())->setPossibleValues([
+                LineItem::PRODUCT_LINE_ITEM_TYPE,
+                LineItem::CREDIT_LINE_ITEM_TYPE,
+                LineItem::CUSTOM_LINE_ITEM_TYPE,
+                LineItem::PROMOTION_LINE_ITEM_TYPE,
+                LineItem::CONTAINER_LINE_ITEM,
+                LineItem::DISCOUNT_LINE_ITEM,
+                LineItem::QUANTITY_LINE_ITEM,
+
+            ]),
             (new CustomFields())->addFlags(new ApiAware()),
             new ManyToOneAssociationField('order', 'order_id', OrderDefinition::class, 'id', false),
             (new ManyToOneAssociationField('product', 'product_id', ProductDefinition::class, 'id', false))->addFlags(new ApiAware())->setDescription('Referenced product if this is a product line item'),

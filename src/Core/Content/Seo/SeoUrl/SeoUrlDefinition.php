@@ -51,7 +51,11 @@ class SeoUrlDefinition extends EntityDefinition
             (new FkField('language_id', 'languageId', LanguageDefinition::class))->addFlags(new ApiAware(), new Required()),
             (new IdField('foreign_key', 'foreignKey'))->addFlags(new ApiAware(), new Required()),
 
-            (new StringField('route_name', 'routeName', 50))->addFlags(new ApiAware(), new Required()),
+            (new StringField('route_name', 'routeName', 50))->addFlags(new ApiAware(), new Required())->setPossibleValues([
+                'frontend.detail.page',
+                'frontend.navigation.page',
+                'frontend.landing.page',
+            ]),
             (new StringField('path_info', 'pathInfo', 750))->addFlags(new ApiAware(), new Required()),
             (new StringField('seo_path_info', 'seoPathInfo', 750))->addFlags(new ApiAware(), new Required()),
             (new BoolField('is_canonical', 'isCanonical'))->addFlags(new ApiAware()),

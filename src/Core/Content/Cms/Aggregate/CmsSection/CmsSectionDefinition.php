@@ -63,7 +63,10 @@ class CmsSectionDefinition extends EntityDefinition
             (new ReferenceVersionField(CmsPageDefinition::class))->addFlags(new Required(), new ApiAware()),
 
             (new IntField('position', 'position'))->addFlags(new ApiAware(), new Required()),
-            (new StringField('type', 'type'))->addFlags(new ApiAware(), new Required()),
+            (new StringField('type', 'type'))->addFlags(new ApiAware(), new Required())->setPossibleValues([
+                'default',
+                'sidebar',
+            ]),
             new LockedField(),
             (new StringField('name', 'name'))->addFlags(new ApiAware()),
             (new StringField('sizing_mode', 'sizingMode'))->addFlags(new ApiAware()),

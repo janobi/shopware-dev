@@ -2,11 +2,14 @@
 
 namespace Shopware\Core\Content\Newsletter\Aggregate\NewsletterRecipient;
 
+use Shopware\Core\Checkout\Customer\SalesChannel\AccountNewsletterRecipientResult;
 use Shopware\Core\Content\Newsletter\Aggregate\NewsletterRecipientTag\NewsletterRecipientTagDefinition;
+use Shopware\Core\Content\Newsletter\SalesChannel\NewsletterSubscribeRoute;
 use Shopware\Core\Framework\DataAbstractionLayer\EntityDefinition;
 use Shopware\Core\Framework\DataAbstractionLayer\Field\CustomFields;
 use Shopware\Core\Framework\DataAbstractionLayer\Field\DateTimeField;
 use Shopware\Core\Framework\DataAbstractionLayer\Field\FkField;
+use Shopware\Core\Framework\DataAbstractionLayer\Field\Flag\ApiAware;
 use Shopware\Core\Framework\DataAbstractionLayer\Field\Flag\PrimaryKey;
 use Shopware\Core\Framework\DataAbstractionLayer\Field\Flag\Required;
 use Shopware\Core\Framework\DataAbstractionLayer\Field\IdField;
@@ -56,7 +59,13 @@ class NewsletterRecipientDefinition extends EntityDefinition
             new StringField('zip_code', 'zipCode'),
             new StringField('city', 'city'),
             new StringField('street', 'street'),
-            (new StringField('status', 'status'))->addFlags(new Required()),
+            (new StringField('status', 'status'))->addFlags(new ApiAware(), new Required())->setPossibleValues([
+                AccountNewsletterRecipientResult::UNDEFINED,
+                NewsletterSubscribeRoute::STATUS_NOT_SET,
+                NewsletterSubscribeRoute::STATUS_OPT_IN,
+                NewsletterSubscribeRoute::STATUS_OPT_OUT,
+                NewsletterSubscribeRoute::STATUS_DIRECT,
+            ]),
             (new StringField('hash', 'hash'))->addFlags(new Required()),
             new CustomFields(),
             new DateTimeField('confirmed_at', 'confirmedAt'),

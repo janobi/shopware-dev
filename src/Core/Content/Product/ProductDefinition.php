@@ -282,7 +282,7 @@ class ProductDefinition extends EntityDefinition
 
         return [
             (new ListField('states', 'states', StringField::class))
-                ->addFlags(new ApiAware(), new WriteProtected(), new Deprecated('v6.8.0.0', 'product.states will be removed; use type instead')),
+                ->addFlags(new ApiAware(), new WriteProtected(), new Deprecated('v6.7.6.0', 'v6.8.0.0', 'product.type')),
         ];
     }
 }

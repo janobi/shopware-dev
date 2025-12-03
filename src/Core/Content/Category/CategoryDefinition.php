@@ -127,7 +127,11 @@ class CategoryDefinition extends EntityDefinition
             (new TreePathField('path', 'path'))->addFlags(new ApiAware()),
             (new ChildCountField())->addFlags(new ApiAware()),
 
-            (new StringField('type', 'type'))->addFlags(new ApiAware(), new Required()),
+            (new StringField('type', 'type'))->addFlags(new ApiAware(), new Required())->setPossibleValues([
+                self::TYPE_PAGE,
+                self::TYPE_LINK,
+                self::TYPE_FOLDER,
+            ]),
             (new StringField('product_assignment_type', 'productAssignmentType'))->addFlags(new ApiAware(), new Required()),
             (new BoolField('visible', 'visible'))->addFlags(new ApiAware()),
             (new BoolField('active', 'active'))->addFlags(new ApiAware()),
