@@ -1,16 +1,63 @@
 /**
  * @sw-package framework
  */
-import * as amplitude from '@amplitude/analytics-browser';
+import { AmplitudeBrowser } from '@amplitude/analytics-browser';
+import { FetchTransport } from '@amplitude/analytics-client-common';
+import type { Payload, Response as AmplitudeResponse } from '@amplitude/analytics-types';
 import { string } from 'src/core/service/util.service';
 import type { TelemetryEvent, EventTypes, TrackableType } from '../../core/telemetry/types';
+
+class AuthenticatedFetchTransport extends FetchTransport {
+    async send(serverUrl: string, payload: Payload): Promise<AmplitudeResponse | null> {
+        if (typeof fetch === 'undefined') {
+            throw new Error('FetchTransport is not supported');
+        }
+
+        let authHeader: Record<string, string> = {};
+        try {
+            const tokenData = await Shopware.Service('analyticsService').getToken();
+            authHeader = { Authorization: `Bearer ${tokenData.token}` };
+        } catch {
+            // Token unavailable, send without auth (gateway will reject)
+        }
+
+        const options: RequestInit = {
+            headers: {
+                'Content-Type': 'application/json',
+                Accept: '*/*',
+                ...authHeader,
+            },
+            body: JSON.stringify(payload),
+            method: 'POST',
+        };
+
+        const response = await fetch(serverUrl, options);
+        const responseText = await response.text();
+
+        try {
+            return this.buildResponse(JSON.parse(responseText));
+        } catch {
+            return this.buildResponse({ code: response.status });
+        }
+    }
+}
+
+let amplitude: AmplitudeBrowser | null = null;
 
 /**
  * @private
  */
 export default async function (): Promise<void> {
+    const analyticsGatewayUrl = Shopware.Store.get('context').app.analyticsGatewayUrl;
+
+    if (!analyticsGatewayUrl) {
+        return;
+    }
+
+    amplitude = new AmplitudeBrowser();
+
     Shopware.Service('loginService').addOnLogoutListener(() => {
-        amplitude.setTransport('beacon');
+        amplitude?.setTransport('beacon');
     });
 
     let defaultLanguageName = '';
@@ -52,7 +99,7 @@ export default async function (): Promise<void> {
 
     // check for consent
 
-    amplitude.init('a04bb926f471ce883bc219814fc9577', undefined, {
+    await amplitude.init('a04bb926f471ce883bc219814fc9577', undefined, {
         autocapture: false,
         serverZone: 'EU',
         appVersion: Shopware.Store.get('context').app.config.version as string,
@@ -62,14 +109,21 @@ export default async function (): Promise<void> {
             platform: false,
         },
         fetchRemoteConfig: false,
-        // serverUrl: use proxy server url here, e.g. usage-data.shopware.io/product-analytics,
-    });
+        serverUrl: `${analyticsGatewayUrl}/event`,
+    }).promise;
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
+    (amplitude as any).config.transportProvider = new AuthenticatedFetchTransport();
 
     // eslint-disable-next-line listeners/no-missing-remove-event-listener
     Shopware.Utils.EventBus.on('telemetry', pushTelemetryEventToAmplitude);
 }
 
 function pushTelemetryEventToAmplitude(telemetryEvent: TelemetryEvent<EventTypes>) {
+    if (!amplitude) {
+        return;
+    }
+
     if (isEventOfType('page_change', telemetryEvent)) {
         amplitude.track('Page Viewed', {
             sw_route_from_name: telemetryEvent.eventData.from.name,
@@ -101,8 +155,8 @@ function pushTelemetryEventToAmplitude(telemetryEvent: TelemetryEvent<EventTypes
 
         // we need a timeout if we want to include the click on the logout button
         setTimeout(() => {
-            amplitude.flush();
-            amplitude.reset();
+            amplitude?.flush();
+            amplitude?.reset();
         }, 0);
 
         return;
