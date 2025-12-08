@@ -38,7 +38,7 @@ class Migration1726135997CreateMessengerStatsTableTest extends TestCase
         $migration->update($this->connection);
 
         $schemaManager = $this->connection->createSchemaManager();
-        $columns = $schemaManager->listTableColumns('messenger_stats');
+        $columns = $schemaManager->introspectTableColumnsByUnquotedName('messenger_stats');
 
         static::assertNotEmpty($columns);
         static::assertArrayHasKey('id', $columns);

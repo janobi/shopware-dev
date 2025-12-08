@@ -32,7 +32,7 @@ class Migration1721811224AddInAppPurchaseGatewayUrlTest extends TestCase
         $this->migrate();
 
         $manager = $this->connection->createSchemaManager();
-        $columns = $manager->listTableColumns('app');
+        $columns = $manager->introspectTableColumnsByUnquotedName('app');
 
         static::assertArrayHasKey('in_app_purchases_gateway_url', $columns);
         static::assertFalse($columns['in_app_purchases_gateway_url']->getNotnull());

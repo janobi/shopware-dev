@@ -142,11 +142,19 @@ SQL
         static::assertFalse($this->existLinkColumn('product_manufacturer'));
     }
 
+    /**
+     * @param non-empty-string $table
+     */
     private function existLinkColumn(string $table): bool
     {
-        $existingColumns = $this->connection->createSchemaManager()->listTableColumns($table);
+        $existingColumns = $this->connection->createSchemaManager()->introspectTableColumnsByUnquotedName($table);
+        foreach ($existingColumns as $column) {
+            if ($column->getObjectName()->getIdentifier()->getValue() === 'link') {
+                return true;
+            }
+        }
 
-        return \array_key_exists('link', $existingColumns);
+        return false;
     }
 
     private function createProductManufacturer(string $name, ?string $link): void

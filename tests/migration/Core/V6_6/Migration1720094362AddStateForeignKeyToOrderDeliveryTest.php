@@ -143,7 +143,7 @@ class Migration1720094362AddStateForeignKeyToOrderDeliveryTest extends TestCase
     private function hasForeignKey(): bool
     {
         $manager = $this->connection->createSchemaManager();
-        $columns = $manager->listTableForeignKeys('order_delivery');
+        $columns = $manager->introspectTableForeignKeyConstraintsByUnquotedName('order_delivery');
 
         return (bool) \array_filter($columns, static fn (ForeignKeyConstraint $column) => $column->getReferencedTableName()->toString() === 'state_machine_state' && $column->getReferencingColumnNames()[0]->toString() === 'state_id' && $column->getReferencedColumnNames()[0]->toString() === 'id');
     }

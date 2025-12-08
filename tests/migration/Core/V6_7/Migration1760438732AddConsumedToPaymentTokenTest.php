@@ -34,13 +34,13 @@ class Migration1760438732AddConsumedToPaymentTokenTest extends TestCase
         $migration->update($this->connection);
         $migration->update($this->connection);
 
-        $existingColumns = $this->connection->createSchemaManager()->listTableColumns('payment_token');
+        $existingColumns = $this->connection->createSchemaManager()->introspectTableColumnsByUnquotedName('payment_token');
         static::assertArrayHasKey('consumed', $existingColumns);
     }
 
     private function rollback(): void
     {
-        $existingColumns = $this->connection->createSchemaManager()->listTableColumns('payment_token');
+        $existingColumns = $this->connection->createSchemaManager()->introspectTableColumnsByUnquotedName('payment_token');
 
         if (\array_key_exists('consumed', $existingColumns)) {
             $this->connection->executeStatement('ALTER TABLE `payment_token` DROP COLUMN `consumed`;');

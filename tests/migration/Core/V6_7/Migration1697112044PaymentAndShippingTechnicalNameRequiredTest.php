@@ -39,12 +39,12 @@ class Migration1697112044PaymentAndShippingTechnicalNameRequiredTest extends Tes
         $this->migrate();
 
         $manager = $this->connection->createSchemaManager();
-        $columns = $manager->listTableColumns(PaymentMethodDefinition::ENTITY_NAME);
+        $columns = $manager->introspectTableColumnsByUnquotedName(PaymentMethodDefinition::ENTITY_NAME);
 
         static::assertArrayHasKey('technical_name', $columns);
         static::assertTrue($columns['technical_name']->getNotnull());
 
-        $columns = $manager->listTableColumns(ShippingMethodDefinition::ENTITY_NAME);
+        $columns = $manager->introspectTableColumnsByUnquotedName(ShippingMethodDefinition::ENTITY_NAME);
 
         static::assertArrayHasKey('technical_name', $columns);
         static::assertTrue($columns['technical_name']->getNotnull());

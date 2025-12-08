@@ -67,7 +67,7 @@ class Migration1717573310ImportExportTechnicalNameRequiredTest extends TestCase
         $migration->update($this->connection);
 
         $manager = $this->connection->createSchemaManager();
-        $columns = $manager->listTableColumns(ImportExportProfileDefinition::ENTITY_NAME);
+        $columns = $manager->introspectTableColumnsByUnquotedName(ImportExportProfileDefinition::ENTITY_NAME);
 
         static::assertArrayHasKey('technical_name', $columns);
         static::assertTrue($columns['technical_name']->getNotnull());

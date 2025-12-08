@@ -31,11 +31,17 @@ class Migration1696515133AddCheckoutGatewayUrlTest extends TestCase
         $this->migrate();
         $this->migrate();
 
-        $manager = $this->connection->createSchemaManager();
-        $columns = $manager->listTableColumns('app');
+        $columns = $this->connection->createSchemaManager()->introspectTableColumnsByUnquotedName('app');
 
-        static::assertArrayHasKey('checkout_gateway_url', $columns);
-        static::assertFalse($columns['checkout_gateway_url']->getNotnull());
+        $urlColumn = null;
+        foreach ($columns as $column) {
+            if ($column->getObjectName()->getIdentifier()->getValue() === 'checkout_gateway_url') {
+                $urlColumn = $column;
+                break;
+            }
+        }
+        static::assertNotNull($urlColumn);
+        static::assertFalse($urlColumn->getNotnull());
     }
 
     private function migrate(): void

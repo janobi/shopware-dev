@@ -50,7 +50,7 @@ class Migration1728040169AddPrimaryOrderDeliveryTest extends TestCase
         $this->migrate();
 
         $manager = $this->connection->createSchemaManager();
-        $columns = $manager->listTableColumns(OrderDefinition::ENTITY_NAME);
+        $columns = $manager->introspectTableColumnsByUnquotedName(OrderDefinition::ENTITY_NAME);
 
         static::assertArrayHasKey('primary_order_delivery_id', $columns);
         static::assertArrayHasKey('primary_order_delivery_version_id', $columns);
@@ -75,7 +75,7 @@ class Migration1728040169AddPrimaryOrderDeliveryTest extends TestCase
         $this->migrate();
 
         $manager = $this->connection->createSchemaManager();
-        $columns = $manager->listTableColumns(OrderDefinition::ENTITY_NAME);
+        $columns = $manager->introspectTableColumnsByUnquotedName(OrderDefinition::ENTITY_NAME);
 
         static::assertArrayHasKey('primary_order_delivery_id', $columns);
         static::assertArrayHasKey('primary_order_delivery_version_id', $columns);

@@ -29,7 +29,7 @@ class Migration1741163941AddOrderInternalCommentTest extends TestCase
         $migration->update($connection);
 
         $manager = $connection->createSchemaManager();
-        $columns = $manager->listTableColumns('order');
+        $columns = $manager->introspectTableColumnsByUnquotedName('order');
 
         static::assertArrayHasKey('internal_comment', $columns);
         static::assertFalse($columns['internal_comment']->getNotnull());

@@ -32,7 +32,7 @@ class Migration1718658881AddValidationDataToOrderTransactionTest extends TestCas
         $this->migrate();
 
         $manager = $this->connection->createSchemaManager();
-        $columns = $manager->listTableColumns('order_transaction');
+        $columns = $manager->introspectTableColumnsByUnquotedName('order_transaction');
 
         static::assertArrayHasKey('validation_data', $columns);
         static::assertFalse($columns['validation_data']->getNotnull());

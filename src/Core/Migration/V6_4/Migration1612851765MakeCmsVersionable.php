@@ -13,7 +13,7 @@ use Shopware\Core\Framework\Migration\MigrationStep;
  *
  * @codeCoverageIgnore
  */
-#[Package('framework')]
+#[Package('discovery')]
 class Migration1612851765MakeCmsVersionable extends MigrationStep
 {
     public function getCreationTimestamp(): int

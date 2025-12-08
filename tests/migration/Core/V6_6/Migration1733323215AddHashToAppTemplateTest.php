@@ -39,7 +39,7 @@ class Migration1733323215AddHashToAppTemplateTest extends TestCase
         $migration->update($this->connection);
 
         $manager = $this->connection->createSchemaManager();
-        $columns = $manager->listTableColumns('app_template');
+        $columns = $manager->introspectTableColumnsByUnquotedName('app_template');
 
         static::assertArrayHasKey('hash', $columns);
     }

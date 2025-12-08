@@ -49,7 +49,7 @@ class Migration1736866790AddDocumentA11yMediaFileIdForDocumentTableTest extends 
     private function hasForeignKey(): bool
     {
         $manager = $this->connection->createSchemaManager();
-        $columns = $manager->listTableForeignKeys('document');
+        $columns = $manager->introspectTableForeignKeyConstraintsByUnquotedName('document');
 
         return (bool) \array_filter($columns, static fn (ForeignKeyConstraint $column) => $column->getReferencedTableName()->toString() === 'media' && $column->getReferencingColumnNames()[0]->toString() === 'document_a11y_media_file_id' && $column->getReferencedColumnNames()[0]->toString() === 'id');
     }

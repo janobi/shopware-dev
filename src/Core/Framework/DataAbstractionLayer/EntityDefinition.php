@@ -121,6 +121,9 @@ abstract class EntityDefinition
         }
     }
 
+    /**
+     * @return non-empty-string
+     */
     abstract public function getEntityName(): string;
 
     final public function getFields(): CompiledFieldCollection

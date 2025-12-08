@@ -6,7 +6,7 @@ use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Platforms\MySQLPlatform;
 use Doctrine\DBAL\Schema\AbstractSchemaManager;
 use Doctrine\DBAL\Schema\ForeignKeyConstraint;
-use Doctrine\DBAL\Schema\Index\IndexedColumn;
+use Doctrine\DBAL\Schema\Name\OptionallyQualifiedName;
 use Doctrine\DBAL\Schema\Name\UnqualifiedName;
 use Shopware\Core\Framework\Log\Package;
 
@@ -14,7 +14,7 @@ use Shopware\Core\Framework\Log\Package;
  * @phpstan-type RelationData array{TABLE_NAME: string, COLUMN_NAME: string, CONSTRAINT_NAME: string, REFERENCED_TABLE_NAME: string, REFERENCED_COLUMN_NAME: string}
  * @phpstan-type ForeignKeyData array{TABLE_NAME: string, COLUMN_NAME: list<string>, REFERENCED_TABLE_NAME: string, REFERENCED_COLUMN_NAME: list<string>}
  */
-#[Package('framework')]
+#[Package('discovery')]
 class MakeVersionableMigrationHelper
 {
     private const DROP_FOREIGN_KEY = 'ALTER TABLE `%s` DROP FOREIGN KEY `%s`';
@@ -62,6 +62,7 @@ EOD;
 
     /**
      * @param array<string, ForeignKeyData> $keyStructures
+     * @param non-empty-string $tableName
      *
      * @return array<string>
      */
@@ -84,14 +85,20 @@ EOD;
     {
         $playbook = [];
         foreach ($keyStructures as $constraintName => $keyStructure) {
-            \assert(\is_string($keyStructure['TABLE_NAME']));
+            $tableName = $keyStructure['TABLE_NAME'];
+            if (!\is_string($tableName) || $tableName === '') {
+                throw MigrationException::logicError('Table name not given or empty');
+            }
 
-            $indexes = $this->schemaManager->listTableIndexes($keyStructure['TABLE_NAME']);
+            $indexes = $this->schemaManager->introspectTableIndexesByUnquotedName($tableName);
 
-            $playbook[] = \sprintf(self::DROP_FOREIGN_KEY, $keyStructure['TABLE_NAME'], $constraintName);
+            $playbook[] = \sprintf(self::DROP_FOREIGN_KEY, $tableName, $constraintName);
 
-            if (\array_key_exists(strtolower($constraintName), $indexes)) {
-                $playbook[] = \sprintf(self::DROP_KEY, $keyStructure['TABLE_NAME'], $constraintName);
+            foreach ($indexes as $index) {
+                $indexName = $index->getObjectName()->getIdentifier()->getValue();
+                if (strtolower($constraintName) === $indexName) {
+                    $playbook[] = \sprintf(self::DROP_KEY, $tableName, $constraintName);
+                }
             }
         }
 
@@ -167,11 +174,11 @@ EOD;
      */
     private function isEqualForeignKey(ForeignKeyConstraint $constraint, string $foreignTable, array $foreignFieldNames): bool
     {
-        if ($constraint->getReferencedTableName()->toString() !== $foreignTable) {
+        if ($constraint->getReferencedTableName()->getUnqualifiedName()->getValue() !== $foreignTable) {
             return false;
         }
 
-        $referencedColumns = array_map(fn (UnqualifiedName $column): string => $column->toString(), $constraint->getReferencedColumnNames());
+        $referencedColumns = array_map(fn (UnqualifiedName $column): string => $column->getIdentifier()->getValue(), $constraint->getReferencedColumnNames());
 
         return \count(array_diff($referencedColumns, $foreignFieldNames)) === 0;
     }
@@ -241,14 +248,21 @@ EOD;
         return $this->connection->fetchAllAssociative($query);
     }
 
+    /**
+     * @param non-empty-string $tableName
+     */
     private function createModifyPrimaryKeyQuery(string $tableName, string $newColumnName, string $defaultValue): string
     {
-        $pk = $this->schemaManager->listTableIndexes($tableName)['primary'];
+        $pk = $this->schemaManager->introspectTablePrimaryKeyConstraint(OptionallyQualifiedName::unquoted($tableName));
+        if ($pk === null) {
+            throw MigrationException::noPrimaryKey();
+        }
 
-        if (\count($pk->getIndexedColumns()) !== 1) {
+        $pkColumns = $pk->getColumnNames();
+        if (\count($pkColumns) !== 1) {
             throw MigrationException::multiColumnPrimaryKey();
         }
-        $pkName = current($pk->getIndexedColumns())->getColumnName()->toString();
+        $pkName = $pkColumns[0]->getIdentifier()->getValue();
 
         return \sprintf(self::MODIFY_PRIMARY_KEY_IN_MAIN, $tableName, $newColumnName, $defaultValue, $pkName, $pkName, $newColumnName);
     }
@@ -258,7 +272,12 @@ EOD;
      */
     private function findForeignKeyDefinition(array $keyStructure): ForeignKeyConstraint
     {
-        $foreignKeys = $this->schemaManager->listTableForeignKeys($keyStructure['TABLE_NAME']);
+        $tableName = $keyStructure['TABLE_NAME'];
+        if (!\is_string($tableName) || $tableName === '') {
+            throw MigrationException::logicError('Table name not given or empty');
+        }
+
+        $foreignKeys = $this->schemaManager->introspectTableForeignKeyConstraintsByUnquotedName($tableName);
         $fk = null;
 
         foreach ($foreignKeys as $foreignKey) {
@@ -336,11 +355,15 @@ EOD;
      */
     private function determineModifyPrimaryKeySql(array $keyStructure, string $foreignKeyColumnName): ?string
     {
-        \assert(\is_string($keyStructure['TABLE_NAME']));
-        $indexes = $this->schemaManager->listTableIndexes($keyStructure['TABLE_NAME']);
+        $tableName = $keyStructure['TABLE_NAME'];
+        \assert(\is_string($tableName) && $tableName !== '');
+        $indexes = $this->schemaManager->introspectTablePrimaryKeyConstraint(OptionallyQualifiedName::unquoted($tableName));
+        if ($indexes === null) {
+            throw MigrationException::noPrimaryKey();
+        }
 
-        $indexedColumns = $indexes['primary']->getIndexedColumns() ?? [];
-        $indexedColumns = array_map(fn (IndexedColumn $column): string => $column->getColumnName()->toString(), $indexedColumns);
+        $indexedColumns = $indexes->getColumnNames();
+        $indexedColumns = array_map(fn (UnqualifiedName $column): string => $column->getIdentifier()->getValue(), $indexedColumns);
 
         if (\count(array_intersect($indexedColumns, $keyStructure['COLUMN_NAME']))) {
             return \sprintf(

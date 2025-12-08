@@ -26,7 +26,7 @@ class Migration1756305375AddCategoriesIndexToProductTest extends TestCase
     public function testIndexIsCreated(): void
     {
         $schemaManager = $this->connection->createSchemaManager();
-        $table = $schemaManager->introspectTable('product');
+        $table = $schemaManager->introspectTableByUnquotedName('product');
 
         if ($table->hasIndex('idx.product.categories')) {
             $this->connection->executeStatement('DROP INDEX `idx.product.categories` ON `product`');
@@ -35,7 +35,7 @@ class Migration1756305375AddCategoriesIndexToProductTest extends TestCase
         $migration = new Migration1756305375AddCategoriesIndexToProduct();
         $migration->update($this->connection);
 
-        $table = $this->connection->createSchemaManager()->introspectTable('product');
+        $table = $this->connection->createSchemaManager()->introspectTableByUnquotedName('product');
 
         static::assertTrue($table->hasIndex('idx.product.categories'));
     }
@@ -46,7 +46,7 @@ class Migration1756305375AddCategoriesIndexToProductTest extends TestCase
         $migration->update($this->connection);
         $migration->update($this->connection);
 
-        $table = $this->connection->createSchemaManager()->introspectTable('product');
+        $table = $this->connection->createSchemaManager()->introspectTableByUnquotedName('product');
 
         static::assertTrue($table->hasIndex('idx.product.categories'));
     }

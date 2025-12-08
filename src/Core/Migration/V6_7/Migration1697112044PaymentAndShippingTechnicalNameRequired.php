@@ -21,13 +21,13 @@ class Migration1697112044PaymentAndShippingTechnicalNameRequired extends Migrati
     public function update(Connection $connection): void
     {
         $manager = $connection->createSchemaManager();
-        $columns = $manager->listTableColumns(PaymentMethodDefinition::ENTITY_NAME);
+        $columns = $manager->introspectTableColumnsByUnquotedName(PaymentMethodDefinition::ENTITY_NAME);
 
         if (\array_key_exists('technical_name', $columns) && !$columns['technical_name']->getNotnull()) {
             $connection->executeStatement('ALTER TABLE `payment_method` MODIFY COLUMN `technical_name` VARCHAR(255) NOT NULL');
         }
 
-        $columns = $manager->listTableColumns('shipping_method');
+        $columns = $manager->introspectTableColumnsByUnquotedName('shipping_method');
 
         if (\array_key_exists('technical_name', $columns) && !$columns['technical_name']->getNotnull()) {
             $connection->executeStatement('ALTER TABLE `shipping_method` MODIFY COLUMN `technical_name` VARCHAR(255) NOT NULL');
