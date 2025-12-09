@@ -71,7 +71,6 @@ class TokenQueryBuilder
             if (str_contains($config->getField(), 'customFields')) {
                 $customFieldName = str_replace('customFields.', '', $config->getField());
 
-                // Only include searchable custom fields in search queries
                 $customFieldTypes = $this->indexingUtils->getCustomFieldTypes($entity, $context);
                 if (!isset($customFieldTypes[$customFieldName])) {
                     continue;

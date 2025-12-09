@@ -261,8 +261,7 @@ class CustomFieldUpdater implements EventSubscriberInterface
             return;
         }
 
-        $customFieldIds = array_keys($updatedFields);
-        $fieldSetIds = $this->customFieldSetGateway->fetchFieldSetIds($customFieldIds);
+        $fieldSetIds = $this->customFieldSetGateway->fetchFieldSetIds(array_keys($updatedFields));
 
         if (\count($fieldSetIds) === 0) {
             return;
@@ -272,29 +271,18 @@ class CustomFieldUpdater implements EventSubscriberInterface
         $customFieldsBySet = $this->customFieldSetGateway->fetchCustomFieldsForSets($setIds);
         $fieldSetEntityMappings = $this->customFieldSetGateway->fetchFieldSetEntityMappings($setIds);
 
-        // Build lookup map only for custom fields we're updating: customFieldId => customField
-        $customFieldIdsMap = array_flip($customFieldIds);
-        $customFieldLookup = [];
+        $fieldsToAdd = [];
         foreach ($customFieldsBySet as $setCustomFields) {
             foreach ($setCustomFields as $customField) {
-                if (isset($customFieldIdsMap[$customField['id']])) {
-                    $customFieldLookup[$customField['id']] = $customField;
+                $customFieldId = $customField['id'];
+
+                if (isset($updatedFields[$customFieldId])) {
+                    $setId = $fieldSetIds[$customFieldId];
+                    if (\in_array('product', $fieldSetEntityMappings[$setId] ?? [], true)) {
+                        $fieldsToAdd[$customField['name']] = self::getTypeFromCustomFieldType($customField['type']);
+                    }
                 }
             }
-        }
-
-        if (\count($customFieldLookup) === 0) {
-            return;
-        }
-
-        $fieldsToAdd = [];
-        foreach ($customFieldLookup as $customFieldId => $customField) {
-            $setId = $fieldSetIds[$customFieldId];
-            if (!\in_array('product', $fieldSetEntityMappings[$setId] ?? [], true)) {
-                continue;
-            }
-
-            $fieldsToAdd[$customField['name']] = self::getTypeFromCustomFieldType($customField['type']);
         }
 
         $this->createFieldsInIndices($fieldsToAdd);

@@ -130,8 +130,21 @@ async function createWrapper(props = defaultProps, privileges = []) {
                         },
                     },
                     'mt-text-field': {
-                        template: '<div class="sw-custom-field-detail__technical-name"><input :disabled="disabled" /></div>',
-                        props: ['disabled'],
+                        template: `
+                            <div class="sw-custom-field-detail__technical-name">
+                                <input :disabled="disabled" />
+                                <div
+                                    v-if="error"
+                                    class="mt-field__error"
+                                >
+                                    {{ error.detail || error }}
+                                </div>
+                            </div>
+                        `,
+                        props: [
+                            'disabled',
+                            'error',
+                        ],
                     },
                 },
             },
@@ -150,7 +163,7 @@ describe('src/module/sw-settings-custom-field/component/sw-custom-field-detail',
         const modalSaveButton = wrapper.find('.sw-custom-field-detail__footer-save');
 
         expect(modalTypeField.attributes('disabled')).toBeUndefined();
-        expect(technicalNameField.props('disabled')).toBe(false);
+        expect(technicalNameField.props('disabled')).toBeFalsy();
         expect(modalPositionField.attributes('disabled')).toBeUndefined();
         expect(modalSaveButton.attributes('disabled')).toBeUndefined();
     });
@@ -165,7 +178,7 @@ describe('src/module/sw-settings-custom-field/component/sw-custom-field-detail',
         const modalSaveButton = wrapper.find('.sw-custom-field-detail__footer-save');
 
         expect(modalTypeField.attributes('disabled')).toBeDefined();
-        expect(technicalNameField.props('disabled')).toBe(true);
+        expect(technicalNameField.props('disabled')).toBeTruthy();
         expect(modalPositionField.attributes('disabled')).toBeDefined();
         expect(modalSaveButton.attributes('disabled')).toBeDefined();
     });
@@ -213,7 +226,7 @@ describe('src/module/sw-settings-custom-field/component/sw-custom-field-detail',
         await flushPromises();
 
         await wrapper.find('.sw-custom-field-detail__technical-name input').setValue('invalid-name.');
-        expect(wrapper.vm.currentCustomField.name).toBe('invalid-name.');
+        expect(wrapper.vm.currentCustomField.name).toBe('custom_additional_field_1');
         await flushPromises();
 
         await wrapper.find('.sw-custom-field-detail__footer-save').trigger('click');
